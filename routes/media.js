@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const isBase64 = require('is-base64');
 const base64Img = require('base64-img');
+const fs = require('fs');
 
 const { Media } = require('../models');
 
@@ -43,6 +44,28 @@ router.post('/', function(req, res) {
         id:media.id,
         image:`${req.get('host')}/images/${filename}`
       }
+    });
+  });
+});
+
+router.delete('/:id', async (req, res) => {
+  // const id = req.params.id;
+  const { id } = req.params;
+  const media = await Media.findByPk(id);
+  if(!media) {
+    return res.status(404).json({status:'error', message:'media not found'});
+  }
+
+  fs.unlink(`./public/${media.image}`, async(err) => {
+    if (err) {
+      return res.status(404).json({status:'error', message:err.message});
+    }
+
+    await media.destroy();
+
+    return res.json({
+      status:'success',
+      message:'image deleted'
     });
   });
 });
